@@ -26,6 +26,12 @@ kotlin {
                 implementation(compose.material)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
+
+                //image loading
+                implementation("media.kamel:kamel-image:0.7.3")
+
+                // http
+                implementation("io.ktor:ktor-client-core:2.3.4")
             }
         }
         val androidMain by getting {
@@ -33,16 +39,27 @@ kotlin {
                 api("androidx.activity:activity-compose:1.7.2")
                 api("androidx.appcompat:appcompat:1.6.1")
                 api("androidx.core:core-ktx:1.10.1")
+
+                // ktor android engine powered by HttpClient
+                implementation("io.ktor:ktor-client-android:2.3.4")
             }
         }
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
+
+        // why creating here ?
         val iosMain by creating {
             dependsOn(commonMain)
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
+
+            // ios deps
+            dependencies {
+                // ktor darwin(ios) engine powered via NSURLSession
+                implementation("io.ktor:ktor-client-darwin:2.3.4")
+            }
         }
     }
 }
