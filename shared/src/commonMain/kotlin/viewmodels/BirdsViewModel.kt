@@ -8,16 +8,23 @@ import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import models.Bird
 
-data class BirdsViewState(
-    val birds: List<Bird> = emptyList()
-)
 
-class BirdsViewModel: ViewModel() {
-    private val _viewState = MutableStateFlow(BirdsViewState())
+sealed interface BirdsUIState {
+    data object Loading : BirdsUIState
+    data object Error : BirdsUIState
+
+    data class BirdsDataState(
+        val categorizedBirds: Map<String, List<Bird>> = emptyMap(),
+        val selectedBirdIndex: Int = 0
+    ): BirdsUIState
+}
+
+
+class BirdsViewModel : ViewModel() {
+    private val _viewState = MutableStateFlow<BirdsUIState>(BirdsUIState.Loading)
     val viewState = _viewState.asStateFlow()
 
     // make this injectable
@@ -30,13 +37,34 @@ class BirdsViewModel: ViewModel() {
 
     init {
         viewModelScope.launch {
-            _viewState.update { it.copy(birds = getBirds()) }
+            getBirds()
+                .onSuccess { birds ->
+                    val categorizedBirdsMap = birds.groupBy { it.category }
+                    _viewState.value = BirdsUIState.BirdsDataState(categorizedBirdsMap)
+                }
+                .onFailure {
+                    _viewState.value = BirdsUIState.Error
+                }
         }
     }
 
-    private suspend fun getBirds(): List<Bird> = httpClient
-        .get("https://sebi.io/demo-image-api/pictures.json")
-        .body<List<Bird>>()
+    fun selectCategoryTab(tabIndex: Int) {
+        (viewState.value as? BirdsUIState.BirdsDataState)?.categorizedBirds?.let {
+            BirdsUIState.BirdsDataState(
+                categorizedBirds = it,
+                selectedBirdIndex = tabIndex
+            )
+        }?.let { _viewState.value = it }
+    }
+
+    private suspend fun getBirds(): Result<List<Bird>> = try {
+        val birds = httpClient
+            .get("https://sebi.io/demo-image-api/pictures.json")
+            .body<List<Bird>>()
+        Result.success(birds)
+    } catch (exception: Exception) {
+        Result.failure(exception)
+    }
 
     override fun onCleared() {
         super.onCleared()

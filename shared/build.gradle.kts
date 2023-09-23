@@ -42,6 +42,9 @@ kotlin {
                 // moko mvvm
                 api("dev.icerock.moko:mvvm-core:0.16.1")
                 api("dev.icerock.moko:mvvm-compose:0.16.1")
+
+                // logging
+                implementation("co.touchlab:kermit:1.0.0")
             }
         }
         val androidMain by getting {
