@@ -38,6 +38,10 @@ kotlin {
 
                 // kotlinx
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
+                // moko mvvm
+                api("dev.icerock.moko:mvvm-core:0.16.1")
+                api("dev.icerock.moko:mvvm-compose:0.16.1")
             }
         }
         val androidMain by getting {
